@@ -97,34 +97,23 @@ class QuizState extends State with SingleTickerProviderStateMixin {
             ),
           ),
         ],
-        bottom: new TabBar(
-          tabs: questions.map((Map q) {
-            return new Tab(
-              child: new Text(q['answer'] ? 'true' : 'false'),
-            );
-          }).toList(),
-          controller: controller,
-        ),
       ),
-      body: new TabBarView(
-        controller: controller,
-        children: questions.map((Map q) {
-          return new Column(
-              children: <Widget>[
-                new Expanded(
-                  child: makeQuestionText(q),
-                ),
-                new Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: new Row(
-                    children: makeButtons(answers[questions.indexOf(q)]),
-                  )
-                  // child: makeButtons(answers[controller.index]),
-                )
-              ],
-            );
-        }).toList(),
-      ),
+      body:  new Column(
+        children: <Widget>[
+          new Expanded(
+            child: new ListView(
+              scrollDirection: Axis.horizontal,
+              children: answers.map((a) => new AnswerIndicator(a)).toList(),
+            ),
+          ),
+          new Expanded(
+              child: new TabBarView(
+                controller: controller,
+                children: questions.map((q) => new Question(q, answers[questions.indexOf(q)])).toList(),
+            ),
+          ),
+        ]
+      )
     );
   }
 
@@ -163,6 +152,29 @@ class QuizState extends State with SingleTickerProviderStateMixin {
           )
         ),
     ];
+  }
+}
+
+class AnswerIndicator extends StatelessWidget {
+  final bool answer;
+
+  const AnswerIndicator (this.answer);
+
+  @override
+  Widget build(BuildContext context) {
+    return new Icon(Icons.ac_unit);
+  }
+}
+
+class Question extends StatelessWidget {
+  final Map question;
+  final bool currentAnswer;
+
+  const Question (this.question, this.currentAnswer);
+
+  @override
+  Widget build(BuildContext context) {
+    return new Text(question['questionText']);
   }
 }
 
