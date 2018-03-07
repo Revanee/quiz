@@ -100,7 +100,8 @@ class QuizState extends State with SingleTickerProviderStateMixin {
       ),
       body:  new Column(
         children: <Widget>[
-          new Expanded(
+          new ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 40.0),
             child: new ListView(
               scrollDirection: Axis.horizontal,
               children: answers.map((a) => new AnswerIndicator(a)).toList(),
@@ -174,7 +175,10 @@ class Question extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return new Text(question['questionText']);
+    return new Padding(
+      padding: const EdgeInsets.all(15.0),
+      child: new Text(question['questionText']),
+    );
   }
 }
 
