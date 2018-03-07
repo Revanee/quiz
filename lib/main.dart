@@ -65,7 +65,13 @@ class Quiz extends StatefulWidget {
 
 class QuizState extends State with SingleTickerProviderStateMixin {
 
-  List<bool> answers = new List(questions.length);
+  List<Map> currentQuestions = questions.map((q) {
+    return {
+      'questionText': q['questionText'],
+      'correctAnswer': q['answer'],
+      'currentAnswer': null
+    };
+  }).toList();
 
   TabController controller;
 
@@ -76,11 +82,11 @@ class QuizState extends State with SingleTickerProviderStateMixin {
       vsync: this,
       length: questions.length
     );
-    controller.addListener(() {
-      setState(() {
-        answers = answers;
-      });
-    });
+    // controller.addListener(() {
+    //   setState(() {
+    //     answers = answers;
+    //   });
+    // });
   }
 
   @override
@@ -89,9 +95,9 @@ class QuizState extends State with SingleTickerProviderStateMixin {
     super.dispose();
   }
   
-  List<Widget> buildAnswerIndicators(List<bool> answers) {
+  List<Widget> buildAnswerIndicators(List<Map> questions) {
     List<Widget> widgets = new List();
-    for (int i = 0; i < this.answers.length; i++) {
+    for (int i = 0; i < questions.length; i++) {
       widgets.add(
         new AnswerIndicator(i, true, controller)
       );
@@ -103,7 +109,7 @@ class QuizState extends State with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) {
     return new Scaffold(
       appBar: new AppBar(
-        title: new Text(answers.fold(0, (i, e) => i + (e == null ? 0 : 1)).toString() + '/' + answers.length.toString()),
+        title: new Text(currentQuestions.fold(0, (i, q) => i + (q['currentAnswer'] == null ? 0 : 1)).toString() + '/' + currentQuestions.length.toString()),
         actions: <Widget>[
           new Center(
             child: new Padding(
@@ -120,14 +126,15 @@ class QuizState extends State with SingleTickerProviderStateMixin {
             child: new ListView.builder(
               scrollDirection: Axis.horizontal,
               itemBuilder: (BuildContext context, int index) =>
-                new AnswerIndicator(index, answers[index], controller),
-              itemCount: answers.length,
+                new AnswerIndicator(index, currentQuestions[index]['currentAnswer'], controller),
+              itemCount: currentQuestions.length,
             )
           ),
           new Expanded(
               child: new TabBarView(
                 controller: controller,
-                children: questions.map((q) => new Question(q, answers[questions.indexOf(q)])).toList(),
+                children: currentQuestions.map((q) =>
+                  new Question(q, currentQuestions[currentQuestions.indexOf(q)]['answer'])).toList(),
             ),
           ),
         ]
@@ -143,7 +150,7 @@ class QuizState extends State with SingleTickerProviderStateMixin {
   }
 
   selectAnswer(bool ans) {
-    setState(() => answers[controller.index] = ans);
+    setState(() => currentQuestions[controller.index]['currentAnswer'] = ans);
     setState(() => controller.index += 1);
   }
 
@@ -173,7 +180,7 @@ class QuizState extends State with SingleTickerProviderStateMixin {
   }
 }
 
-class AnswerIndicator extends StatelessWidget {
+class AnswerIndicator extends StatefulWidget {
   final int index;
   final TabController controller;
   final bool answer;
@@ -186,15 +193,24 @@ class AnswerIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return new ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 20.0),
-      child: new Column(
-        children: <Widget>[
-          new Icon(Icons.ac_unit, size: IconTheme.of(context).size * getIdxDivergence(),),
-          new Text(index.toString())
-        ]
+    return new Padding(
+      padding: new EdgeInsets.all(2.0 * getIdxDivergence()),
+      child: new ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 20.0),
+        child: new InkWell(
+          onTap: () {controller.animateTo(index);},
+          child: new Icon(
+            answer == null ? Icons.add_circle_outline : Icons.add_circle,
+            size: IconTheme.of(context).size * getIdxDivergence(),
+          ),
+        )
       ),
     );
+  }
+
+  @override
+  State<StatefulWidget> createState() {
+    //TODO: Fix AnswerIndicator
   }
 }
 
@@ -204,11 +220,39 @@ class Question extends StatelessWidget {
 
   const Question (this.question, this.currentAnswer);
 
+  void setAnswer(bool ans) {
+    // question
+  }
+
   @override
   Widget build(BuildContext context) {
     return new Padding(
       padding: const EdgeInsets.all(15.0),
-      child: new Text(question['questionText']),
+      child: new Column(
+        children: <Widget>[
+          new Text(question['questionText']),
+          new Expanded(child: new Text(question['answer'].toString())),
+          new Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: <Widget>[
+              new IconButton(
+              icon: new Icon(Icons.check, color: currentAnswer == null ?
+                Colors.black : currentAnswer ? Colors.green : Colors.black,),
+                onPressed: () {
+                  setAnswer(true);
+                },
+              ),
+              new IconButton(
+              icon: new Icon(Icons.close, color: currentAnswer == null ?
+                Colors.black : currentAnswer ? Colors.black : Colors.green,),
+                onPressed: () {
+                  setAnswer(false);
+                },
+              )
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
