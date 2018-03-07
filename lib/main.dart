@@ -76,12 +76,27 @@ class QuizState extends State with SingleTickerProviderStateMixin {
       vsync: this,
       length: questions.length
     );
+    controller.addListener(() {
+      setState(() {
+        answers = answers;
+      });
+    });
   }
 
   @override
   dispose () {
     controller.dispose();
     super.dispose();
+  }
+  
+  List<Widget> buildAnswerIndicators(List<bool> answers) {
+    List<Widget> widgets = new List();
+    for (int i = 0; i < this.answers.length; i++) {
+      widgets.add(
+        new AnswerIndicator(i, true, controller)
+      );
+    }
+    return widgets;
   }
 
   @override
@@ -102,10 +117,12 @@ class QuizState extends State with SingleTickerProviderStateMixin {
         children: <Widget>[
           new ConstrainedBox(
             constraints: const BoxConstraints(maxHeight: 40.0),
-            child: new ListView(
+            child: new ListView.builder(
               scrollDirection: Axis.horizontal,
-              children: answers.map((a) => new AnswerIndicator(a)).toList(),
-            ),
+              itemBuilder: (BuildContext context, int index) =>
+                new AnswerIndicator(index, answers[index], controller),
+              itemCount: answers.length,
+            )
           ),
           new Expanded(
               child: new TabBarView(
@@ -157,13 +174,27 @@ class QuizState extends State with SingleTickerProviderStateMixin {
 }
 
 class AnswerIndicator extends StatelessWidget {
+  final int index;
+  final TabController controller;
   final bool answer;
 
-  const AnswerIndicator (this.answer);
+  const AnswerIndicator (this.index, this.answer, this.controller);
+
+  double getIdxDivergence() {
+    return (controller.length - (controller.index - index).abs()) / controller.length;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return new Icon(Icons.ac_unit);
+    return new ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 20.0),
+      child: new Column(
+        children: <Widget>[
+          new Icon(Icons.ac_unit, size: IconTheme.of(context).size * getIdxDivergence(),),
+          new Text(index.toString())
+        ]
+      ),
+    );
   }
 }
 
